@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: citebid-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    mem_limit: 1g
+
+  n8n:
+    image: n8nio/n8n:2.48.7
+    container_name: citebid-n8n
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      N8N_HOST: ${N8N_HOST}
+      N8N_PORT: ${N8N_PORT}
+      N8N_PROTOCOL: http
+      N8N_WEBHOOK_URL: ${WEBHOOK_URL}
+      GENERIC_TIMEZONE: Asia/Yerevan
+      TZ: Asia/Yerevan
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${N8N_PORT}:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    mem_limit: 1g
+
+  agent:
+    build: ./agent
+    container_name: citebid-agent
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    ports:
+      - "${AGENT_PORT}:8000"
+    volumes:
+      - ./data:/app/data
+      - ./prompts:/app/prompts
+    mem_limit: 2g
+
+volumes:
+  pgdata:
+  n8n_data:

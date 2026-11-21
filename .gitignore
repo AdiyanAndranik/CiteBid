@@ -1,0 +1,38 @@
+# Secrets
+.env
+*.pem
+*.key
+
+# Caches and local data
+*.cache
+.cache/
+.llm_cache/
+budget.json
+data/dumps/
+*.dump
+*.sql.gz
+
+# Python
+venv/
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node (UI, later)
+node_modules/
+ui/dist/
+
+# Docker volumes / local state
+pgdata/
+n8n_data/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+for_project.txt
